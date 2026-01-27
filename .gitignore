@@ -1,0 +1,38 @@
+# AI and Agent Documentation
+AGENTS.md
+WARP.md
+CLAUDE.md
+.cursorrules
+.cursor/
+.github/copilot-instructions.md
+.aider*
+.cody/
+.windsurf/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Electron
+dist/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
