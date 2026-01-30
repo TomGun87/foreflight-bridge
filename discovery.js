@@ -1,31 +1,39 @@
 const dgram = require("dgram");
 
 const DISCOVERY_PORT = 63093;
-const DISCOVERY_MESSAGE = Buffer.from("ForeFlight");
 
-function discoverForeFlight(timeoutMs = 5000) {
+function discoverForeFlight(timeoutMs = 10000) {
     return new Promise((resolve) => {
         const socket = dgram.createSocket("udp4");
+        let resolved = false;
 
-        socket.bind(() => {
-            socket.setBroadcast(true);
-            socket.send(
-                DISCOVERY_MESSAGE,
-                0,
-                DISCOVERY_MESSAGE.length,
-                DISCOVERY_PORT,
-                "255.255.255.255"
-            );
+        socket.bind(DISCOVERY_PORT, () => {
+            console.log(`🔍 Listening for ForeFlight broadcast on port ${DISCOVERY_PORT}...`);
         });
 
-        socket.on("message", (_, rinfo) => {
-            socket.close();
-            resolve(rinfo.address);
+        socket.on("message", (msg, rinfo) => {
+            if (resolved) return;
+
+            try {
+                const data = JSON.parse(msg.toString());
+                if (data.App === "ForeFlight" && data.GDL90) {
+                    const port = data.GDL90.port || 4000;
+                    console.log(`📍 ForeFlight discovered at ${rinfo.address}:${port}`);
+                    resolved = true;
+                    socket.close();
+                    resolve({ ip: rinfo.address, port });
+                }
+            } catch (err) {
+                // Ignore non-JSON messages
+            }
         });
 
         setTimeout(() => {
-            socket.close();
-            resolve(null);
+            if (!resolved) {
+                resolved = true;
+                socket.close();
+                resolve(null);
+            }
         }, timeoutMs);
     });
 }
