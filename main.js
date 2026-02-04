@@ -6,8 +6,7 @@ app.whenReady().then(async () => {
     console.log("🚀 ForeFlight Bridge starting...");
 
     const result = await discoverForeFlight();
-    // const result = { ip: "10.42.0.14", port: 4000 };
-    
+
     if (!result) {
         console.error("❌ ForeFlight not found on network");
         return;
