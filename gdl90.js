@@ -263,6 +263,26 @@ function ownship() {
 
 
 
+// Ownship Geometric Altitude message (0x0B) - required for GPS altitude display
+function ownshipGeoAltitude() {
+    // Geometric altitude in 5-foot resolution, signed 16-bit
+    const geoAlt = Math.round(simState.alt / 5);
+    
+    // Vertical metrics (VFOM = Vertical Figure of Merit)
+    // 0x7FFF = not available, use a reasonable value like 50 feet
+    const vfom = 10; // 10 * 5ft = 50ft accuracy
+    
+    const msg = [
+        0x0B, // Message ID: Ownship Geometric Altitude
+        (geoAlt >> 8) & 0xFF, // Geo altitude MSB
+        geoAlt & 0xFF,         // Geo altitude LSB
+        (vfom >> 8) & 0xFF,   // VFOM MSB
+        vfom & 0xFF           // VFOM LSB
+    ];
+    
+    return frame(msg);
+}
+
 // ForeFlight AHRS message (extension format)
 function ahrs() {
     const roll = Math.round(simState.roll * 10); // 0.1 degree resolution
@@ -300,8 +320,11 @@ function startGDL90Stream(ip, port = 4000, onStateUpdate = null) {
     // Send heartbeat every 1 second per spec
     setInterval(() => socket.send(heartbeat(), port, ip), 1000);
     
-    // Send ownship and AHRS at 5Hz (200ms) per spec
-    setInterval(() => socket.send(ownship(), port, ip), 200);
+    // Send ownship, geometric altitude, and AHRS at 5Hz (200ms) per spec
+    setInterval(() => {
+        socket.send(ownship(), port, ip);
+        socket.send(ownshipGeoAltitude(), port, ip);
+    }, 200);
     setInterval(() => socket.send(ahrs(), port, ip), 200);
 
     console.log("📡 Sending GDL-90 stream to ForeFlight...");
