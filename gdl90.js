@@ -1,5 +1,11 @@
 const dgram = require("dgram");
 
+// Realistic rate constants
+const TURN_RATE = 3;           // degrees per second (standard rate turn)
+const CLIMB_RATE = 500;        // feet per minute
+const ACCEL_RATE = 5;          // knots per second
+const UPDATE_INTERVAL = 100;   // ms (10Hz update rate for smooth transitions)
+
 // CRC-16 CCITT lookup table (from gdl90 Python library)
 const CRC16_TABLE = [
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
@@ -100,6 +106,102 @@ let simState = {
     heading: 90    // degrees true
 };
 
+// Target state (what we're transitioning towards)
+let targetState = {
+    heading: 90,
+    alt: 3000,
+    gs: 120
+};
+
+// Get current state for UI updates
+function getSimState() {
+    return { ...simState };
+}
+
+// Set position immediately (no transition)
+function setPosition(lat, lon) {
+    simState.lat = lat;
+    simState.lon = lon;
+}
+
+// Set target heading (will turn at standard rate)
+function setTargetHeading(heading) {
+    targetState.heading = heading % 360;
+}
+
+// Set target altitude (will climb/descend at realistic rate)
+function setTargetAltitude(alt) {
+    targetState.alt = Math.max(0, Math.min(18000, alt));
+}
+
+// Set target speed (will accelerate/decelerate realistically)
+function setTargetSpeed(speed) {
+    targetState.gs = Math.max(60, Math.min(250, speed));
+}
+
+// Calculate shortest turn direction
+function shortestTurn(current, target) {
+    let diff = target - current;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    return diff;
+}
+
+// Update simulation state towards targets
+function updateSimulation(deltaSeconds) {
+    // Update heading (standard rate turn = 3°/sec)
+    const headingDiff = shortestTurn(simState.heading, targetState.heading);
+    if (Math.abs(headingDiff) > 0.1) {
+        const maxTurn = TURN_RATE * deltaSeconds;
+        const turn = Math.sign(headingDiff) * Math.min(Math.abs(headingDiff), maxTurn);
+        simState.heading = (simState.heading + turn + 360) % 360;
+        simState.track = simState.heading; // For simplicity, track follows heading
+        
+        // Add bank angle during turn (approximately 15° for standard rate)
+        simState.roll = Math.sign(headingDiff) * Math.min(Math.abs(headingDiff) * 2, 25);
+    } else {
+        simState.roll = 0;
+    }
+    
+    // Update altitude (500 fpm climb/descent rate)
+    const altDiff = targetState.alt - simState.alt;
+    if (Math.abs(altDiff) > 1) {
+        const maxChange = (CLIMB_RATE / 60) * deltaSeconds; // Convert fpm to feet per second
+        const change = Math.sign(altDiff) * Math.min(Math.abs(altDiff), maxChange);
+        simState.alt += change;
+        simState.vvel = Math.sign(altDiff) * Math.min(Math.abs(altDiff) * 60 / deltaSeconds, CLIMB_RATE);
+        
+        // Pitch during climb/descent
+        simState.pitch = Math.sign(altDiff) * Math.min(Math.abs(simState.vvel) / 100, 10);
+    } else {
+        simState.vvel = 0;
+        simState.pitch = 2; // Level flight pitch
+    }
+    
+    // Update speed (5 kt/sec acceleration)
+    const speedDiff = targetState.gs - simState.gs;
+    if (Math.abs(speedDiff) > 0.1) {
+        const maxAccel = ACCEL_RATE * deltaSeconds;
+        const accel = Math.sign(speedDiff) * Math.min(Math.abs(speedDiff), maxAccel);
+        simState.gs += accel;
+    }
+    
+    // Update position based on current heading and speed
+    const speedMs = simState.gs * 0.514444; // knots to m/s
+    const headingRad = simState.heading * Math.PI / 180;
+    
+    // Calculate displacement
+    const dx = speedMs * Math.sin(headingRad) * deltaSeconds;
+    const dy = speedMs * Math.cos(headingRad) * deltaSeconds;
+    
+    // Convert to lat/lon changes
+    const deltaLat = dy / 111320; // meters per degree latitude
+    const deltaLon = dx / (111320 * Math.cos(simState.lat * Math.PI / 180));
+    
+    simState.lat += deltaLat;
+    simState.lon += deltaLon;
+}
+
 // Convert latitude to GDL-90 format (24-bit signed 2's complement)
 function makeLatitude(lat) {
     let val = Math.round(lat * (0x800000 / 180.0));
@@ -182,22 +284,18 @@ function ahrs() {
     return frame(msg);
 }
 
-function startGDL90Stream(ip, port = 4000) {
+function startGDL90Stream(ip, port = 4000, onStateUpdate = null) {
     const socket = dgram.createSocket("udp4");
 
-    // Update simulation state every second
+    // Update simulation state at 10Hz for smooth transitions
     setInterval(() => {
-        // Simulate eastbound flight with slight movement
-        const timeStep = 1.0; // seconds
-        const speedMs = simState.gs * 0.514444; // knots to m/s
-        const deltaLon = (speedMs * timeStep) / (111320 * Math.cos(simState.lat * Math.PI / 180));
+        updateSimulation(UPDATE_INTERVAL / 1000);
         
-        simState.lon += deltaLon;
-        
-        // Add some gentle pitch/roll variation for realism
-        simState.pitch = 2 + Math.sin(Date.now() / 5000) * 1;
-        simState.roll = Math.sin(Date.now() / 3000) * 3;
-    }, 1000);
+        // Notify UI of state changes
+        if (onStateUpdate) {
+            onStateUpdate(getSimState());
+        }
+    }, UPDATE_INTERVAL);
 
     // Send heartbeat every 1 second per spec
     setInterval(() => socket.send(heartbeat(), port, ip), 1000);
@@ -211,4 +309,11 @@ function startGDL90Stream(ip, port = 4000) {
     console.log(`   Altitude: ${simState.alt} ft, Speed: ${simState.gs} kt, Track: ${simState.track}°`);
 }
 
-module.exports = { startGDL90Stream };
+module.exports = { 
+    startGDL90Stream,
+    getSimState,
+    setPosition,
+    setTargetHeading,
+    setTargetAltitude,
+    setTargetSpeed
+};

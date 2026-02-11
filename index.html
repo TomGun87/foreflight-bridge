@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForeFlight Bridge</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ForeFlight Bridge</h1>
+            <div id="connection-status" class="status disconnected">
+                <span class="status-dot"></span>
+                <span id="status-text">Searching for ForeFlight...</span>
+            </div>
+        </header>
+
+        <section class="panel position-panel">
+            <h2>Initial Position</h2>
+            <div class="input-group">
+                <div class="input-field">
+                    <label for="init-lat">Latitude</label>
+                    <input type="number" id="init-lat" value="50.9010" step="0.0001" min="-90" max="90">
+                    <span class="unit">°</span>
+                </div>
+                <div class="input-field">
+                    <label for="init-lon">Longitude</label>
+                    <input type="number" id="init-lon" value="4.4840" step="0.0001" min="-180" max="180">
+                    <span class="unit">°</span>
+                </div>
+                <button id="set-position" class="btn primary">Set Position</button>
+            </div>
+        </section>
+
+        <section class="panel controls-panel">
+            <h2>Flight Controls</h2>
+            
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Heading</label>
+                    <div class="value-display">
+                        <span class="current-label">Current:</span>
+                        <span id="hdg-current" class="current-value">090°</span>
+                        <span class="target-label">Target:</span>
+                        <span id="hdg-target-display" class="target-value">090°</span>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="hdg-slider" min="0" max="359" value="90">
+                    <div class="slider-labels">
+                        <span>N</span><span>E</span><span>S</span><span>W</span><span>N</span>
+                    </div>
+                </div>
+                <div class="quick-buttons">
+                    <button class="btn small" data-hdg="0">N</button>
+                    <button class="btn small" data-hdg="90">E</button>
+                    <button class="btn small" data-hdg="180">S</button>
+                    <button class="btn small" data-hdg="270">W</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Altitude</label>
+                    <div class="value-display">
+                        <span class="current-label">Current:</span>
+                        <span id="alt-current" class="current-value">3000 ft</span>
+                        <span class="target-label">Target:</span>
+                        <span id="alt-target-display" class="target-value">3000 ft</span>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="alt-slider" min="0" max="18000" value="3000" step="100">
+                    <div class="slider-labels">
+                        <span>0</span><span>4500</span><span>9000</span><span>13500</span><span>18000</span>
+                    </div>
+                </div>
+                <div class="quick-buttons">
+                    <button class="btn small" data-alt="1500">1500</button>
+                    <button class="btn small" data-alt="3000">3000</button>
+                    <button class="btn small" data-alt="5000">5000</button>
+                    <button class="btn small" data-alt="8000">8000</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Speed</label>
+                    <div class="value-display">
+                        <span class="current-label">Current:</span>
+                        <span id="spd-current" class="current-value">120 kt</span>
+                        <span class="target-label">Target:</span>
+                        <span id="spd-target-display" class="target-value">120 kt</span>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="spd-slider" min="60" max="250" value="120">
+                    <div class="slider-labels">
+                        <span>60</span><span>110</span><span>155</span><span>200</span><span>250</span>
+                    </div>
+                </div>
+                <div class="quick-buttons">
+                    <button class="btn small" data-spd="80">80</button>
+                    <button class="btn small" data-spd="120">120</button>
+                    <button class="btn small" data-spd="150">150</button>
+                    <button class="btn small" data-spd="180">180</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel status-panel">
+            <h2>Current State</h2>
+            <div class="state-grid">
+                <div class="state-item">
+                    <span class="state-label">Position</span>
+                    <span id="state-position" class="state-value">50.9010°N, 4.4840°E</span>
+                </div>
+                <div class="state-item">
+                    <span class="state-label">Ground Track</span>
+                    <span id="state-track" class="state-value">090°</span>
+                </div>
+                <div class="state-item">
+                    <span class="state-label">Vertical Speed</span>
+                    <span id="state-vspeed" class="state-value">0 fpm</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
