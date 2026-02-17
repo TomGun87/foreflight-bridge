@@ -2,6 +2,8 @@
 const initLat = document.getElementById('init-lat');
 const initLon = document.getElementById('init-lon');
 const setPositionBtn = document.getElementById('set-position');
+const airportSearch = document.getElementById('airport-search');
+const airportResults = document.getElementById('airport-results');
 
 const hdgSlider = document.getElementById('hdg-slider');
 const altSlider = document.getElementById('alt-slider');
@@ -60,6 +62,81 @@ setPositionBtn.addEventListener('click', () => {
     
     window.bridge.setPosition(lat, lon);
 });
+
+// Airport search
+let searchTimeout = null;
+
+airportSearch.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    const query = airportSearch.value.trim();
+    
+    if (query.length < 2) {
+        airportResults.classList.remove('active');
+        return;
+    }
+    
+    searchTimeout = setTimeout(async () => {
+        const results = await window.bridge.searchAirports(query);
+        displayAirportResults(results);
+    }, 150);
+});
+
+airportSearch.addEventListener('focus', async () => {
+    const query = airportSearch.value.trim();
+    if (query.length >= 2) {
+        const results = await window.bridge.searchAirports(query);
+        displayAirportResults(results);
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.airport-search-container')) {
+        airportResults.classList.remove('active');
+    }
+});
+
+function displayAirportResults(results) {
+    if (results.length === 0) {
+        airportResults.innerHTML = '<div class="airport-item"><span class="name">No airports found</span></div>';
+        airportResults.classList.add('active');
+        return;
+    }
+    
+    airportResults.innerHTML = results.map(apt => {
+        const codes = apt.iata ? `${apt.icao} / ${apt.iata}` : apt.icao;
+        const typeClass = apt.type.replace('_airport', '');
+        const typeLabel = typeClass.charAt(0).toUpperCase() + typeClass.slice(1);
+        
+        return `
+            <div class="airport-item" data-lat="${apt.lat}" data-lon="${apt.lon}" data-icao="${apt.icao}">
+                <div>
+                    <span class="codes">${codes}</span>
+                    <span class="name">${apt.name}</span>
+                    <span class="type-badge ${typeClass}">${typeLabel}</span>
+                </div>
+                <div class="location">${apt.city ? apt.city + ', ' : ''}${apt.country} • ${apt.elev} ft</div>
+            </div>
+        `;
+    }).join('');
+    
+    airportResults.classList.add('active');
+    
+    // Add click handlers
+    airportResults.querySelectorAll('.airport-item[data-lat]').forEach(item => {
+        item.addEventListener('click', () => {
+            const lat = parseFloat(item.dataset.lat);
+            const lon = parseFloat(item.dataset.lon);
+            const icao = item.dataset.icao;
+            
+            initLat.value = lat.toFixed(4);
+            initLon.value = lon.toFixed(4);
+            airportSearch.value = icao;
+            airportResults.classList.remove('active');
+            
+            window.bridge.setPosition(lat, lon);
+        });
+    });
+}
 
 // Heading controls
 hdgSlider.addEventListener('input', () => {

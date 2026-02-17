@@ -1,5 +1,18 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+const fs = require("fs");
+
+// Load airport database
+let airports = [];
+const airportsPath = path.join(__dirname, 'airports.json');
+if (fs.existsSync(airportsPath)) {
+    try {
+        airports = JSON.parse(fs.readFileSync(airportsPath, 'utf8'));
+        console.log(`✈️  Loaded ${airports.length} airports`);
+    } catch (err) {
+        console.error('Failed to load airports:', err.message);
+    }
+}
 const { discoverForeFlight } = require("./discovery");
 const { 
     startGDL90Stream, 
@@ -57,6 +70,33 @@ app.whenReady().then(async () => {
     ipcMain.on("set-climb-rate", (event, rate) => {
         console.log(`📊 Climb rate: ${rate} fpm`);
         setClimbRate(rate);
+    });
+    
+    // Airport search handler
+    ipcMain.handle('search-airports', (event, query) => {
+        if (!query || query.length < 2) return [];
+        
+        const q = query.toLowerCase();
+        const results = airports.filter(apt => {
+            return apt.icao.toLowerCase().includes(q) ||
+                   apt.iata.toLowerCase().includes(q) ||
+                   apt.name.toLowerCase().includes(q) ||
+                   apt.city.toLowerCase().includes(q);
+        });
+        
+        // Return top 20 results, prioritizing exact ICAO/IATA matches
+        results.sort((a, b) => {
+            const aExact = a.icao.toLowerCase() === q || a.iata.toLowerCase() === q;
+            const bExact = b.icao.toLowerCase() === q || b.iata.toLowerCase() === q;
+            if (aExact && !bExact) return -1;
+            if (bExact && !aExact) return 1;
+            
+            // Then by type (large airports first)
+            const typeOrder = { 'large_airport': 0, 'medium_airport': 1, 'small_airport': 2 };
+            return typeOrder[a.type] - typeOrder[b.type];
+        });
+        
+        return results.slice(0, 20);
     });
     
     // Notify UI that we're searching
