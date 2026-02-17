@@ -86,6 +86,28 @@
 
             <div class="control-group">
                 <div class="control-header">
+                    <label>Vertical Speed Rate</label>
+                    <div class="value-display">
+                        <span class="target-label">Max:</span>
+                        <span id="vs-rate-display" class="target-value">500 fpm</span>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="vs-rate-slider" min="100" max="6000" value="500" step="100">
+                    <div class="slider-labels">
+                        <span>100</span><span>1500</span><span>3000</span><span>4500</span><span>6000</span>
+                    </div>
+                </div>
+                <div class="quick-buttons">
+                    <button class="btn small" data-vsrate="500">500</button>
+                    <button class="btn small" data-vsrate="1000">1000</button>
+                    <button class="btn small" data-vsrate="2000">2000</button>
+                    <button class="btn small" data-vsrate="4000">4000</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">
                     <label>Speed</label>
                     <div class="value-display">
                         <span class="current-label">Current:</span>
@@ -95,16 +117,17 @@
                     </div>
                 </div>
                 <div class="slider-container">
-                    <input type="range" id="spd-slider" min="60" max="250" value="120">
+                    <input type="range" id="spd-slider" min="0" max="500" value="120">
                     <div class="slider-labels">
-                        <span>60</span><span>110</span><span>155</span><span>200</span><span>250</span>
+                        <span>0</span><span>125</span><span>250</span><span>375</span><span>500</span>
                     </div>
                 </div>
                 <div class="quick-buttons">
-                    <button class="btn small" data-spd="80">80</button>
+                    <button class="btn small" data-spd="0">Stop</button>
+                    <button class="btn small" data-spd="15">Taxi</button>
                     <button class="btn small" data-spd="120">120</button>
-                    <button class="btn small" data-spd="150">150</button>
-                    <button class="btn small" data-spd="180">180</button>
+                    <button class="btn small" data-spd="250">250</button>
+                    <button class="btn small" data-spd="400">400</button>
                 </div>
             </div>
         </section>

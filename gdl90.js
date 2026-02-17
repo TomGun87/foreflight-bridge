@@ -2,7 +2,7 @@ const dgram = require("dgram");
 
 // Realistic rate constants
 const TURN_RATE = 3;           // degrees per second (standard rate turn)
-const CLIMB_RATE = 500;        // feet per minute
+let climbRate = 500;           // feet per minute (adjustable)
 const ACCEL_RATE = 5;          // knots per second
 const UPDATE_INTERVAL = 100;   // ms (10Hz update rate for smooth transitions)
 
@@ -136,7 +136,12 @@ function setTargetAltitude(alt) {
 
 // Set target speed (will accelerate/decelerate realistically)
 function setTargetSpeed(speed) {
-    targetState.gs = Math.max(60, Math.min(250, speed));
+    targetState.gs = Math.max(0, Math.min(500, speed));
+}
+
+// Set climb/descent rate
+function setClimbRate(rate) {
+    climbRate = Math.max(100, Math.min(6000, rate));
 }
 
 // Calculate shortest turn direction
@@ -163,13 +168,13 @@ function updateSimulation(deltaSeconds) {
         simState.roll = 0;
     }
     
-    // Update altitude (500 fpm climb/descent rate)
+    // Update altitude (adjustable fpm climb/descent rate)
     const altDiff = targetState.alt - simState.alt;
     if (Math.abs(altDiff) > 1) {
-        const maxChange = (CLIMB_RATE / 60) * deltaSeconds; // Convert fpm to feet per second
+        const maxChange = (climbRate / 60) * deltaSeconds; // Convert fpm to feet per second
         const change = Math.sign(altDiff) * Math.min(Math.abs(altDiff), maxChange);
         simState.alt += change;
-        simState.vvel = Math.sign(altDiff) * Math.min(Math.abs(altDiff) * 60 / deltaSeconds, CLIMB_RATE);
+        simState.vvel = Math.sign(altDiff) * Math.min(Math.abs(altDiff) * 60 / deltaSeconds, climbRate);
         
         // Pitch during climb/descent
         simState.pitch = Math.sign(altDiff) * Math.min(Math.abs(simState.vvel) / 100, 10);
@@ -338,5 +343,6 @@ module.exports = {
     setPosition,
     setTargetHeading,
     setTargetAltitude,
-    setTargetSpeed
+    setTargetSpeed,
+    setClimbRate
 };

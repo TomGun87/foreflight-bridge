@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('bridge', {
     setTargetHeading: (heading) => ipcRenderer.send('set-target-heading', heading),
     setTargetAltitude: (altitude) => ipcRenderer.send('set-target-altitude', altitude),
     setTargetSpeed: (speed) => ipcRenderer.send('set-target-speed', speed),
+    setClimbRate: (rate) => ipcRenderer.send('set-climb-rate', rate),
     
     // Receive state updates
     onStateUpdate: (callback) => ipcRenderer.on('state-update', (event, state) => callback(state)),

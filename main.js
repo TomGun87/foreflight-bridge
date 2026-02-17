@@ -6,7 +6,8 @@ const {
     setPosition, 
     setTargetHeading, 
     setTargetAltitude, 
-    setTargetSpeed 
+    setTargetSpeed,
+    setClimbRate
 } = require("./gdl90");
 
 let mainWindow;
@@ -51,6 +52,11 @@ app.whenReady().then(async () => {
     ipcMain.on("set-target-speed", (event, speed) => {
         console.log(`🚀 Target speed: ${speed} kt`);
         setTargetSpeed(speed);
+    });
+    
+    ipcMain.on("set-climb-rate", (event, rate) => {
+        console.log(`📊 Climb rate: ${rate} fpm`);
+        setClimbRate(rate);
     });
     
     // Notify UI that we're searching

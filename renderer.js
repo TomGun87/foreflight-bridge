@@ -6,6 +6,8 @@ const setPositionBtn = document.getElementById('set-position');
 const hdgSlider = document.getElementById('hdg-slider');
 const altSlider = document.getElementById('alt-slider');
 const spdSlider = document.getElementById('spd-slider');
+const vsRateSlider = document.getElementById('vs-rate-slider');
+const vsRateDisplay = document.getElementById('vs-rate-display');
 
 const hdgCurrent = document.getElementById('hdg-current');
 const altCurrent = document.getElementById('alt-current');
@@ -104,6 +106,22 @@ document.querySelectorAll('[data-spd]').forEach(btn => {
         spdSlider.value = spd;
         spdTargetDisplay.textContent = formatSpeed(spd);
         window.bridge.setTargetSpeed(spd);
+    });
+});
+
+// Vertical speed rate controls
+vsRateSlider.addEventListener('input', () => {
+    const rate = parseInt(vsRateSlider.value);
+    vsRateDisplay.textContent = rate + ' fpm';
+    window.bridge.setClimbRate(rate);
+});
+
+document.querySelectorAll('[data-vsrate]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const rate = parseInt(btn.dataset.vsrate);
+        vsRateSlider.value = rate;
+        vsRateDisplay.textContent = rate + ' fpm';
+        window.bridge.setClimbRate(rate);
     });
 });
 
