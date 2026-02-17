@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld('bridge', {
     setTargetSpeed: (speed) => ipcRenderer.send('set-target-speed', speed),
     setClimbRate: (rate) => ipcRenderer.send('set-climb-rate', rate),
     
+    // Airport search
+    searchAirports: (query) => ipcRenderer.invoke('search-airports', query),
+    
     // Receive state updates
     onStateUpdate: (callback) => ipcRenderer.on('state-update', (event, state) => callback(state)),
     

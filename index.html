@@ -17,7 +17,14 @@
         </header>
 
         <section class="panel position-panel">
-            <h2>Initial Position</h2>
+            <h2>Position</h2>
+            <div class="airport-search-container">
+                <div class="input-field" style="flex: 1; min-width: 100%;">
+                    <label for="airport-search">Search Airport (ICAO, IATA, name, or city)</label>
+                    <input type="text" id="airport-search" placeholder="e.g. KJFK, LAX, Brussels...">
+                </div>
+                <div id="airport-results" class="airport-results"></div>
+            </div>
             <div class="input-group">
                 <div class="input-field">
                     <label for="init-lat">Latitude</label>
